@@ -2,12 +2,24 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"strconv"
 
+	"os"
+
+	"github.com/ashwanthkumar/slack-go-webhook"
 	"github.com/go-resty/resty"
 )
+
+// ServerInfor read from env
+type ServerInfor struct {
+	username     string
+	password     string
+	sonarURL     string
+	slackHookURL string
+	projectName  string
+	slackChanel  string
+}
 
 // SonarStatus Response from json
 type SonarStatus struct {
@@ -24,26 +36,73 @@ type SonarStatus struct {
 
 // NotifContent to push to slack
 type NotifContent struct {
-	ID                     string
-	Key                    string
-	Name                   string
-	Color                  string
+	id                     string
+	key                    string
+	name                   string
+	color                  string
 	alertStatus            string
+	status                 string
 	sqaleIndex             string
 	bugs                   string
 	duplicatedLinesDensity string
 	codeSmells             string
 }
 
-func fetchState(domain string, username string, password string) *resty.Response {
+// Field slack
+type Field struct {
+	Title string `json:"title"`
+	Value string `json:"value"`
+	Short bool   `json:"short"`
+}
+
+// Attachment slack
+type Attachment struct {
+	Fallback   *string  `json:"fallback"`
+	Color      *string  `json:"color"`
+	PreText    *string  `json:"pretext"`
+	AuthorName *string  `json:"author_name"`
+	AuthorLink *string  `json:"author_link"`
+	AuthorIcon *string  `json:"author_icon"`
+	Title      *string  `json:"title"`
+	TitleLink  *string  `json:"title_link"`
+	Text       *string  `json:"text"`
+	ImageUrl   *string  `json:"image_url"`
+	Fields     []*Field `json:"fields"`
+	Footer     *string  `json:"footer"`
+	FooterIcon *string  `json:"footer_icon"`
+}
+
+// Payload slack
+type Payload struct {
+	Parse       string       `json:"parse,omitempty"`
+	Username    string       `json:"username,omitempty"`
+	IconUrl     string       `json:"icon_url,omitempty"`
+	IconEmoji   string       `json:"icon_emoji,omitempty"`
+	Channel     string       `json:"channel,omitempty"`
+	Text        string       `json:"text,omitempty"`
+	Attachments []Attachment `json:"attachments,omitempty"`
+}
+
+func getEnvironmentVariable() ServerInfor {
+	return ServerInfor{
+		username:     os.Getenv("SONAR_USERNAME"),
+		password:     os.Getenv("SONAR_PASSWORD"),
+		slackChanel:  os.Getenv("SLACK_CHANNEL"),
+		slackHookURL: os.Getenv("SLACK_HOOK_URL"),
+		projectName:  os.Getenv("PROJECT_ALIAS_NAME"),
+		sonarURL:     os.Getenv("SONAR_URL"),
+	}
+}
+
+func fetchState(serverInfor ServerInfor) *resty.Response {
 	resq, err := resty.
 		R().
 		SetQueryParams(map[string]string{
 			"metricKeys":   "bugs, duplicated_lines_density, code_smells, alert_status, sqale_index",
-			"componentKey": "gu_came_web_v2",
+			"componentKey": serverInfor.projectName,
 		}).
-		SetBasicAuth(username, password).
-		Get(domain + "api/measures/component")
+		SetBasicAuth(serverInfor.username, serverInfor.password).
+		Get(serverInfor.sonarURL + "api/measures/component")
 	if err != nil {
 		return nil
 	}
@@ -52,10 +111,9 @@ func fetchState(domain string, username string, password string) *resty.Response
 
 func convertToNotif(status SonarStatus) (content NotifContent) {
 	notifContent := NotifContent{
-		ID:    status.Component.ID,
-		Key:   status.Component.Key,
-		Name:  status.Component.Name,
-		Color: "Green",
+		id:   status.Component.ID,
+		key:  status.Component.Key,
+		name: status.Component.Name,
 	}
 	for _, val := range status.Component.Measures {
 		switch val.Metric {
@@ -63,6 +121,17 @@ func convertToNotif(status SonarStatus) (content NotifContent) {
 			notifContent.bugs = val.Value
 		case "alert_status":
 			notifContent.alertStatus = val.Value
+			switch notifContent.alertStatus {
+			case "ERROR":
+				notifContent.color = "danger"
+				notifContent.status = "DANGER"
+			case "WARN":
+				notifContent.color = "warning"
+				notifContent.status = "WARNING"
+			case "OK":
+				notifContent.color = "good"
+				notifContent.status = "GREAT!"
+			}
 		case "sqale_index":
 			debtHours, err := strconv.ParseFloat(val.Value, 64)
 			if err != nil {
@@ -80,9 +149,18 @@ func convertToNotif(status SonarStatus) (content NotifContent) {
 	return notifContent
 }
 
+func sendToSlack(serverInfor ServerInfor, notifContent NotifContent) {
+	attachment := slack.Attachment{}
+	payload := slack.Payload{
+		Channel:     serverInfor.slackChanel,
+		Attachments: []slack.Attachment{attachment},
+	}
+	slack.Send(serverInfor.slackHookURL, "", payload)
+}
+
 func main() {
-	domain, username, password, webHook := "http://sonarqube.geekup.vn/", "temp", "gu123451", "https://hooks.slack.com/services/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"
-	result := fetchState(domain, username, password)
+	serverInfor := getEnvironmentVariable()
+	result := fetchState(serverInfor)
 	if result == nil {
 		return
 	}
@@ -92,5 +170,5 @@ func main() {
 		return
 	}
 	notifContent := convertToNotif(status)
-	fmt.Println(notifContent, webHook)
+	sendToSlack(serverInfor, notifContent)
 }
