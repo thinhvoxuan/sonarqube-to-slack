@@ -1,4 +1,4 @@
-FROM alpine:3.2
+FROM alpine:3.4
 
 ENV GOROOT=/usr/lib/go \
     GOPATH=/gopath \
@@ -15,4 +15,5 @@ RUN apk add -U git go && \
   rm -rf /gopath/src && \
   rm -rf /var/cache/apk/*
 
+USER nobody
 ENTRYPOINT ["/gopath/bin/app"]
