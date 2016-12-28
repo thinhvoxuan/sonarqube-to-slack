@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.4
 
 ENV GOROOT=/usr/lib/go \
     GOPATH=/gopath \
