@@ -4,20 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"os"
 	"strconv"
 
+	"github.com/caarlos0/env"
 	"github.com/go-resty/resty"
 )
 
 // ServerInfor read from env
 type ServerInfor struct {
-	Username     string
-	Password     string
-	SonarURL     string
-	SlackHookURL string
-	ProjectName  string
-	SlackChanel  string
+	Username     string `env:"SONAR_USERNAME"`
+	Password     string `env:"SONAR_PASSWORD"`
+	SonarURL     string `env:"SONAR_URL"`
+	SlackHookURL string `env:"SLACK_HOOK_URL"`
+	ProjectName  string `env:"PROJECT_ALIAS_NAME"`
+	SlackChanel  string `env:"SLACK_CHANNEL"`
 }
 
 // SonarStatus Response from json
@@ -81,17 +81,6 @@ type Payload struct {
 	Channel     string       `json:"channel,omitempty"`
 	Text        string       `json:"text,omitempty"`
 	Attachments []Attachment `json:"attachments,omitempty"`
-}
-
-func getEnvironmentVariable() ServerInfor {
-	return ServerInfor{
-		Username:     os.Getenv("SONAR_USERNAME"),
-		Password:     os.Getenv("SONAR_PASSWORD"),
-		SlackChanel:  os.Getenv("SLACK_CHANNEL"),
-		SlackHookURL: os.Getenv("SLACK_HOOK_URL"),
-		ProjectName:  os.Getenv("PROJECT_ALIAS_NAME"),
-		SonarURL:     os.Getenv("SONAR_URL"),
-	}
 }
 
 func fetchState(serverInfor ServerInfor) *resty.Response {
@@ -175,7 +164,11 @@ func manualSendSlack(serverInfor ServerInfor, notifContent NotifContent) {
 }
 
 func main() {
-	serverInfor := getEnvironmentVariable()
+	serverInfor := ServerInfor{}
+	err := env.Parse(&serverInfor)
+	if err != nil {
+		return
+	}
 	result := fetchState(serverInfor)
 	if result == nil {
 		return
