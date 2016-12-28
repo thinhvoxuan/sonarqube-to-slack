@@ -17,7 +17,7 @@ type ServerInfor struct {
 	SonarURL     string `env:"SONAR_URL"`
 	SlackHookURL string `env:"SLACK_HOOK_URL"`
 	ProjectName  string `env:"PROJECT_ALIAS_NAME"`
-	SlackChanel  string `env:"SLACK_CHANNEL"`
+	SlackChanel  string `env:"SLACK_CHANNEL" envDefault:"#general"`
 }
 
 // SonarStatus Response from json
@@ -139,10 +139,10 @@ func convertToNotif(status SonarStatus) (content NotifContent) {
 }
 
 func (notifContent NotifContent) text() string {
-	return "DANGER \n *" +
+	return notifContent.Status + " \n *" +
 		notifContent.Bugs + " bugs*\n Technical debt: *" + notifContent.SqaleIndex +
-		" days*\n Duplicated: * " + notifContent.DuplicatedLinesDensity +
-		"% *\n * " + notifContent.CodeSmells + " * Code Smells"
+		" days*\n Duplicated: *" + notifContent.DuplicatedLinesDensity +
+		"%* \n *" + notifContent.CodeSmells + "* Code Smells"
 }
 
 func manualSendSlack(serverInfor ServerInfor, notifContent NotifContent) {
@@ -174,8 +174,8 @@ func main() {
 		return
 	}
 	var status SonarStatus
-	err := json.Unmarshal(result.Body(), &status)
-	if err != nil {
+	error := json.Unmarshal(result.Body(), &status)
+	if error != nil {
 		return
 	}
 	notifContent := convertToNotif(status)
