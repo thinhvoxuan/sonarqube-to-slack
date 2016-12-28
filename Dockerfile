@@ -1,4 +1,4 @@
-FROM alpine:3.2
+FROM alpine:3.4
 
 ENV GOROOT=/usr/lib/go \
     GOPATH=/gopath \
@@ -14,5 +14,7 @@ RUN apk add -U git go && \
   rm -rf /gopath/pkg && \
   rm -rf /gopath/src && \
   rm -rf /var/cache/apk/*
+
+RUN apk add --no-cache ca-certificates
 
 ENTRYPOINT ["/gopath/bin/app"]
