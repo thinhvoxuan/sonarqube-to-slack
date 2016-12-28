@@ -153,7 +153,7 @@ func (notifContent NotifContent) text() string {
 	return "DANGER \n *" +
 		notifContent.Bugs + " bugs*\n Technical debt: *" + notifContent.SqaleIndex +
 		" days*\n Duplicated: * " + notifContent.DuplicatedLinesDensity +
-		" %*\n * " + notifContent.CodeSmells + " * Code Smells"
+		"% *\n * " + notifContent.CodeSmells + " * Code Smells"
 }
 
 func manualSendSlack(serverInfor ServerInfor, notifContent NotifContent) {
