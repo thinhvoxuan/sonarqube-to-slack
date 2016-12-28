@@ -150,7 +150,10 @@ func convertToNotif(status SonarStatus) (content NotifContent) {
 }
 
 func (notifContent NotifContent) text() string {
-	return "DANGER \n *7 bugs*\n Technical debt: *8 days*\n Duplicated: *11%*\n *358* Code Smells"
+	return "DANGER \n *" +
+		notifContent.Bugs + " bugs*\n Technical debt: *" + notifContent.SqaleIndex +
+		" days*\n Duplicated: * " + notifContent.DuplicatedLinesDensity +
+		" %*\n * " + notifContent.CodeSmells + " * Code Smells"
 }
 
 func manualSendSlack(serverInfor ServerInfor, notifContent NotifContent) {
@@ -158,7 +161,7 @@ func manualSendSlack(serverInfor ServerInfor, notifContent NotifContent) {
 		Color:      notifContent.Color,
 		Text:       notifContent.text(),
 		AuthorName: "Sonar Qube",
-		Title:      "Review code: prj_came_web_v2",
+		Title:      "Review code: " + serverInfor.ProjectName,
 		MarkDownIn: []string{"text"},
 	}
 	payload := Payload{
