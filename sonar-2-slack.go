@@ -56,19 +56,19 @@ type Field struct {
 
 // Attachment slack
 type Attachment struct {
-	Fallback   *string  `json:"fallback"`
-	Color      *string  `json:"color"`
-	PreText    *string  `json:"pretext"`
-	AuthorName *string  `json:"author_name"`
-	AuthorLink *string  `json:"author_link"`
-	AuthorIcon *string  `json:"author_icon"`
-	Title      *string  `json:"title"`
-	TitleLink  *string  `json:"title_link"`
-	Text       *string  `json:"text"`
-	ImageURL   *string  `json:"image_url"`
+	Fallback   string   `json:"fallback"`
+	Color      string   `json:"color"`
+	PreText    string   `json:"pretext"`
+	AuthorName string   `json:"author_name"`
+	AuthorLink string   `json:"author_link"`
+	AuthorIcon string   `json:"author_icon"`
+	Title      string   `json:"title"`
+	TitleLink  string   `json:"title_link"`
+	Text       string   `json:"text"`
+	ImageURL   string   `json:"image_url"`
 	Fields     []*Field `json:"fields"`
-	Footer     *string  `json:"footer"`
-	FooterIcon *string  `json:"footer_icon"`
+	Footer     string   `json:"footer"`
+	FooterIcon string   `json:"footer_icon"`
 	MarkDownIn []string `json:"mrkdwn_in"`
 }
 
@@ -149,11 +149,23 @@ func convertToNotif(status SonarStatus) (content NotifContent) {
 	return notifContent
 }
 
+func (notifContent NotifContent) text() string {
+	return "DANGER \n *7 bugs*\n Technical debt: *8 days*\n Duplicated: *11%*\n *358* Code Smells"
+}
+
 func manualSendSlack(serverInfor ServerInfor, notifContent NotifContent) {
-	attachment := Attachment{}
+	attachment := Attachment{
+		Color:      notifContent.Color,
+		Text:       notifContent.text(),
+		AuthorName: "Sonar Qube",
+		Title:      "Review code: prj_came_web_v2",
+		MarkDownIn: []string{"text"},
+	}
 	payload := Payload{
 		Channel:     serverInfor.SlackChanel,
 		Attachments: []Attachment{attachment},
+		Username:    "CI-Bot",
+		IconEmoji:   ":monkey_face:",
 	}
 	resp, err := resty.R().SetBody(payload).Post(serverInfor.SlackHookURL)
 	fmt.Println(resp, err)
