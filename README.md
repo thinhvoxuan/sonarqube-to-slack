@@ -9,12 +9,15 @@ SONAR_USERNAME=temp SONAR_PASSWORD=abc12 SLACK_CHANNEL=#general PROJECT_ALIAS_NA
 # run with docker. 
 Docker images from [xuanthinh244/sonarqube-to-slack](https://hub.docker.com/r/xuanthinh244/sonarqube-to-slack)
 
+```
+docker pull xuanthinh244/sonarqube-to-slack
 docker run --rm -e SONAR_USERNAME="temp"   \
 -e SONAR_PASSWORD="abc123" \
 -e SLACK_CHANNEL="#general" \
 -e PROJECT_ALIAS_NAME="gu_falcon1" \
 -e SLACK_HOOK_URL="https://hooks.slack.com/services" \
 -e SONAR_URL="http://sonarqube.example.com/" xuanthinh244/sonarqube-to-slack
+```
 
 
 # Tasks
