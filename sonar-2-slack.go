@@ -6,6 +6,8 @@ import (
 	"math"
 	"strconv"
 
+	"os"
+
 	"github.com/caarlos0/env"
 	"github.com/go-resty/resty"
 )
@@ -91,7 +93,7 @@ func fetchState(serverInfor ServerInfor) *resty.Response {
 			"componentKey": serverInfor.ProjectName,
 		}).
 		SetBasicAuth(serverInfor.Username, serverInfor.Password).
-		Get(serverInfor.SonarURL + "api/measures/component")
+		Get(serverInfor.SonarURL + "/api/measures/component")
 	if err != nil {
 		return nil
 	}
@@ -167,16 +169,19 @@ func main() {
 	serverInfor := ServerInfor{}
 	err := env.Parse(&serverInfor)
 	if err != nil {
-		return
+		fmt.Println("could not read env")
+		os.Exit(1)
 	}
 	result := fetchState(serverInfor)
 	if result == nil {
-		return
+		fmt.Println("could not fetch information ")
+		os.Exit(1)
 	}
 	var status SonarStatus
 	error := json.Unmarshal(result.Body(), &status)
 	if error != nil {
-		return
+		fmt.Println("could not parse data: ", error)
+		os.Exit(1)
 	}
 	notifContent := convertToNotif(status)
 	manualSendSlack(serverInfor, notifContent)
