@@ -1,5 +1,8 @@
 # sonarqube-to-slack
 get information from Sonarqube then notif to slack channel
+
+![demo image](images/demo.png)
+
 # run with command
 
 ```
