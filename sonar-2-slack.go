@@ -47,7 +47,7 @@ type NotifContent struct {
 	Bugs                   string
 	DuplicatedLinesDensity string
 	CodeSmells             string
-	Coverage 	       string
+	Coverage 	      			 string
 }
 
 // Field slack
@@ -90,7 +90,7 @@ func fetchState(serverInfor ServerInfor) *resty.Response {
 	resq, err := resty.
 		R().
 		SetQueryParams(map[string]string{
-			"metricKeys":   "bugs, duplicated_lines_density, code_smells, alert_status, sqale_index", "coverage
+			"metricKeys":   "bugs, duplicated_lines_density, code_smells, alert_status, sqale_index, coverage",
 			"componentKey": serverInfor.ProjectName,
 		}).
 		SetBasicAuth(serverInfor.Username, serverInfor.Password).
@@ -137,7 +137,8 @@ func convertToNotif(status SonarStatus) (content NotifContent) {
 		case "duplicated_lines_density":
 			notifContent.DuplicatedLinesDensity = val.Value
 		case "coverage":
-			notifContent.Coverage = val.value
+			notifContent.Coverage = val.Value
+
 		}
 	}
 	return notifContent
