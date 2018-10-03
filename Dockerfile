@@ -1,20 +1,9 @@
-FROM alpine:3.4
+FROM golang:1.11
 
-ENV GOROOT=/usr/lib/go \
-    GOPATH=/gopath \
-    GOBIN=/gopath/bin \
-    PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+WORKDIR /go/src/app
+COPY . .
 
-WORKDIR /gopath/src/app
-ADD . /gopath/src/app
+RUN go get -d -v ./...
+RUN go install -v ./...
 
-RUN apk add -U git go && \
-  go get -v app && \
-  apk del git go && \
-  rm -rf /gopath/pkg && \
-  rm -rf /gopath/src && \
-  rm -rf /var/cache/apk/*
-
-RUN apk add --no-cache ca-certificates
-
-ENTRYPOINT ["/gopath/bin/app"]
+CMD ["app"]

@@ -19,7 +19,6 @@ type ServerInfor struct {
 	SonarURL     string `env:"SONAR_URL"`
 	SlackHookURL string `env:"SLACK_HOOK_URL"`
 	ProjectName  string `env:"PROJECT_ALIAS_NAME"`
-	SlackChanel  string `env:"SLACK_CHANNEL" envDefault:"#general"`
 }
 
 // SonarStatus Response from json
@@ -47,7 +46,7 @@ type NotifContent struct {
 	Bugs                   string
 	DuplicatedLinesDensity string
 	CodeSmells             string
-	Coverage 	      			 string
+	Coverage               string
 }
 
 // Field slack
@@ -87,8 +86,7 @@ type Payload struct {
 }
 
 func fetchState(serverInfor ServerInfor) *resty.Response {
-	resq, err := resty.
-		R().
+	resq, err := resty.R().
 		SetQueryParams(map[string]string{
 			"metricKeys":   "bugs, duplicated_lines_density, code_smells, alert_status, sqale_index, coverage",
 			"componentKey": serverInfor.ProjectName,
@@ -98,6 +96,7 @@ func fetchState(serverInfor ServerInfor) *resty.Response {
 	if err != nil {
 		return nil
 	}
+	fmt.Println(resq)
 	return resq
 }
 
@@ -148,7 +147,7 @@ func (notifContent NotifContent) text() string {
 	return notifContent.Status + " \n *" +
 		notifContent.Bugs + " bugs*\n Technical debt: *" + notifContent.SqaleIndex +
 		" days*\n Duplicated: *" + notifContent.DuplicatedLinesDensity +
-		"%* \n *" + notifContent.CodeSmells + "* Code Smells" + 
+		"%* \n *" + notifContent.CodeSmells + "* Code Smells" +
 		"%* \n *" + notifContent.Coverage + "* Code coverage"
 
 }
@@ -162,7 +161,6 @@ func manualSendSlack(serverInfor ServerInfor, notifContent NotifContent) {
 		MarkDownIn: []string{"text"},
 	}
 	payload := Payload{
-		Channel:     serverInfor.SlackChanel,
 		Attachments: []Attachment{attachment},
 		Username:    "CI-Bot",
 		IconEmoji:   ":monkey_face:",
